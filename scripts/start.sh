@@ -33,10 +33,10 @@ if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
   grep -q "^TELEGRAM_BOT_TOKEN=" "$ENV_FILE" 2>/dev/null || echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}" >> "$ENV_FILE"
 fi
 
-# Auto-configure Telegram Bot if TELEGRAM_BOT_TOKEN environment variable is set
-if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
-  echo "Telegram Bot Token detected. Configuring Telegram integration..."
-  CONFIG_FILE="$HERMES_HOME/config.yaml"
+# Auto-configure Telegram Bot if TELEGRAM_BOT_TOKEN is set AND config.yaml doesn't already exist or lack telegram
+CONFIG_FILE="$HERMES_HOME/config.yaml"
+if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ ! -s "$CONFIG_FILE" ]; then
+  echo "Telegram Bot Token detected. Creating initial Telegram configuration..."
 
   if [ -n "${TELEGRAM_ALLOWED_USERS:-}" ]; then
     ALLOWED_STR="[\"${TELEGRAM_ALLOWED_USERS}\"]"
@@ -72,12 +72,13 @@ if [ "${HERMES_ENABLED:-true}" = "true" ]; then
   fi
 
   if [ -z "$HERMES_BIN" ]; then
-    echo "Hermes executable not found. Skipping daemon launch (or install with curl script locally)." >&2
+    echo "Hermes executable not found. Skipping daemon launch." >&2
     HERMES_PID=""
   else
-    echo "Starting Hermes Gateway using $HERMES_BIN..."
-    "$HERMES_BIN" gateway start &
+    echo "Starting Hermes Gateway daemon using $HERMES_BIN..."
+    nohup "$HERMES_BIN" gateway run >> "$DATA_DIR/hermes-gateway.log" 2>&1 &
     HERMES_PID=$!
+    echo "Hermes Gateway started with PID $HERMES_PID (logging to $DATA_DIR/hermes-gateway.log)"
   fi
 else
   echo "HERMES_ENABLED is false; skipping Hermes daemon."
