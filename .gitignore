@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+hermes-data/
+backup-work/
+*.gpg
+*.tar.gz
+credentials/
+sessions/
+__pycache__/
+.pytest_cache/
