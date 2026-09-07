@@ -23,13 +23,19 @@ fi
 if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
   echo "Telegram Bot Token detected. Configuring Telegram integration..."
   CONFIG_FILE="$HERMES_HOME/config.yaml"
-  touch "$CONFIG_FILE"
+  mkdir -p "$HERMES_HOME"
+
+  if [ -n "${TELEGRAM_ALLOWED_USERS:-}" ]; then
+    ALLOWED_STR="[\"${TELEGRAM_ALLOWED_USERS}\"]"
+  else
+    ALLOWED_STR="[\"*\"]"
+  fi
 
   cat <<EOF > "$CONFIG_FILE"
 telegram:
   enabled: true
   bot_token: "${TELEGRAM_BOT_TOKEN}"
-  allowed_users: [${TELEGRAM_ALLOWED_USERS:-"*"}]
+  allowed_users: ${ALLOWED_STR}
 EOF
   echo "Telegram configuration written to $CONFIG_FILE"
 fi
