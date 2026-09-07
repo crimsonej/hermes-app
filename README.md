@@ -20,7 +20,7 @@ The included `trading-risk` skill requires explicit confirmation before an order
 4. Add the backup variables from `.env.example` as Railway secrets.
 5. Use a Railway cron service to run `npm run backup` once per day.
 
-The file `.env.example` is a complete variable checklist with placeholders. Railway does not automatically import that file, so copy the variable names into the Railway Variables panel and replace every `PASTE_...` or `CREATE_...` value. Do not commit a real `.env` file.
+The Docker image preloads the safe, non-secret defaults from `.env.example`, including paper trading, the backup repository, and the data paths. Railway does not show Docker defaults as rows in the Variables panel. Copy the variable names into that panel only when you need to override a default or add a secret. Do not commit a real `.env` file.
 
 Required setup values:
 

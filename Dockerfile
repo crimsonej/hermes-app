@@ -10,6 +10,14 @@ RUN apt-get update \
 
 ENV PATH="/root/.local/bin:/root/.hermes/bin:${PATH}"
 ENV HERMES_HOME=/app/.hermes
+ENV PORT=3000 \
+	DATA_DIR=/app/data \
+	RESTORE_ON_START=true \
+	HERMES_ENABLED=true \
+	HERMES_TRADING_MODE=paper \
+	LIVE_TRADING_ENABLED=false \
+	BACKUP_BRANCH=main \
+	BACKUP_REPO=crimsonej/hermes-app-backup
 
 WORKDIR /app
 

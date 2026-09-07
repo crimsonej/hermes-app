@@ -13,7 +13,11 @@ if [ "${RESTORE_ON_START:-true}" = "true" ]; then
 fi
 
 mkdir -p "$HERMES_HOME/skills"
-cp -R "$ROOT_DIR/hermes/skills/." "$HERMES_HOME/skills/"
+if [ -d "$ROOT_DIR/hermes/skills" ]; then
+  cp -R "$ROOT_DIR/hermes/skills/." "$HERMES_HOME/skills/"
+else
+  echo "No custom Hermes skills found; continuing with built-in skills."
+fi
 
 if [ -f package.json ]; then
   npm run dev &
