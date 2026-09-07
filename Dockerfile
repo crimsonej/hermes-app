@@ -8,7 +8,7 @@ RUN apt-get update \
 	&& curl -LsSf https://astral.sh/uv/install.sh | sh \
 	&& /root/.local/bin/uv python install 3.11
 
-ENV PATH="/root/.local/bin:/root/.hermes/bin:${PATH}"
+ENV PATH="/opt/hermes-venv/bin:/root/.local/bin:/root/.hermes/bin:${PATH}"
 ENV HERMES_HOME=/app/.hermes
 ENV PORT=3000 \
 	DATA_DIR=/app/data \
@@ -31,7 +31,8 @@ COPY . .
 
 RUN git clone --depth 1 --branch "${HERMES_VERSION}" https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
 	&& /root/.local/bin/uv venv /opt/hermes-venv --python 3.11 \
-	&& /root/.local/bin/uv pip install --python /opt/hermes-venv/bin/python -e /opt/hermes-agent
+	&& /root/.local/bin/uv pip install --python /opt/hermes-venv/bin/python -e /opt/hermes-agent \
+	&& ln -s /opt/hermes-venv/bin/hermes /usr/local/bin/hermes
 
 EXPOSE 3000
 
