@@ -19,6 +19,21 @@ else
   echo "No custom Hermes skills found; continuing with built-in skills."
 fi
 
+# Auto-configure Telegram Bot if TELEGRAM_BOT_TOKEN environment variable is set
+if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
+  echo "Telegram Bot Token detected. Configuring Telegram integration..."
+  CONFIG_FILE="$HERMES_HOME/config.yaml"
+  touch "$CONFIG_FILE"
+
+  cat <<EOF > "$CONFIG_FILE"
+telegram:
+  enabled: true
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
+  allowed_users: [${TELEGRAM_ALLOWED_USERS:-"*"}]
+EOF
+  echo "Telegram configuration written to $CONFIG_FILE"
+fi
+
 if [ -f server.js ]; then
   node server.js &
   WEB_PID=$!
