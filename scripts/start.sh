@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+HERMES_HOME="${HERMES_HOME:-$ROOT_DIR/.hermes}"
+export HERMES_HOME
+
 if [ "${RESTORE_ON_START:-true}" = "true" ]; then
   echo "Restoring latest backup if available..."
   bash scripts/restore.sh || echo "No backup found or restore failed; continuing with empty state."

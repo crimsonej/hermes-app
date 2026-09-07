@@ -20,6 +20,22 @@ The included `trading-risk` skill requires explicit confirmation before an order
 4. Add the backup variables from `.env.example` as Railway secrets.
 5. Use a Railway cron service to run `npm run backup` once per day.
 
+The file `.env.example` is a complete variable checklist with placeholders. Railway does not automatically import that file, so copy the variable names into the Railway Variables panel and replace every `PASTE_...` or `CREATE_...` value. Do not commit a real `.env` file.
+
+Required setup values:
+
+```text
+HERMES_ENABLED=true
+HERMES_TRADING_MODE=paper
+RESTORE_ON_START=true
+BACKUP_REPO=crimsonej/hermes-app-backup
+BACKUP_BRANCH=main
+BACKUP_PASSPHRASE=<your generated passphrase>
+GITHUB_TOKEN=<your GitHub token>
+<one Hermes provider API key>
+LIVE_TRADING_ENABLED=false
+```
+
 The service exposes `/health` on Railway's `$PORT`. Hermes itself is started by `scripts/start.sh`.
 
 ## Local checks
