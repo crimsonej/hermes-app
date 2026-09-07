@@ -1,19 +1,27 @@
-FROM python:3.12-slim
+FROM node:20-bookworm-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    HERMES_DATA_DIR=/data/hermes \
-    BACKUP_WORK_DIR=/tmp/backup-work
+ARG HERMES_VERSION=v2026.8.31
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git gnupg ca-certificates tini \
-    && rm -rf /var/lib/apt/lists/*
+	&& apt-get install -y --no-install-recommends bash ca-certificates curl git openssl python3.11 python3.11-venv \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& curl -LsSf https://astral.sh/uv/install.sh | sh \
+	&& /root/.local/bin/uv python install 3.11
+
+ENV PATH="/root/.local/bin:/root/.hermes/bin:${PATH}"
+ENV HERMES_HOME=/app/.hermes
 
 WORKDIR /app
-COPY entrypoint.sh backup.sh restore.sh /app/
-RUN chmod +x /app/entrypoint.sh /app/backup.sh /app/restore.sh \
-    && mkdir -p /data/hermes /tmp/backup-work
 
-COPY . /app/project/
+COPY package*.json ./
+RUN npm install --omit=dev
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/app/entrypoint.sh"]
+COPY . .
+
+RUN git clone --depth 1 --branch "${HERMES_VERSION}" https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
+	&& /root/.local/bin/uv venv /opt/hermes-venv --python 3.11 \
+	&& /root/.local/bin/uv pip install --python /opt/hermes-venv/bin/python -e /opt/hermes-agent
+
+EXPOSE 3000
+
+CMD ["bash", "scripts/start.sh"]

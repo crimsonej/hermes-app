@@ -1,11 +1,23 @@
+node_modules/
 .env
 .env.*
-!.env.example
-hermes-data/
-backup-work/
-*.gpg
-*.tar.gz
-credentials/
-sessions/
-__pycache__/
-.pytest_cache/
+.DS_Store
+npm-debug.log*
+*.log
+backup-tmp/
+backups/
+/tmp/
+**/.tmp/
+
+# app data
+/data/
+/data/*
+/hermes/
+/.hermes/
+
+# local secrets
+*.pem
+*.key
+*.crt
+*.secret
+*.enc

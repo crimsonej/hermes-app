@@ -1,0 +1,15 @@
+{
+  "name": "hermes-app",
+  "version": "1.0.0",
+  "description": "Hermes web app starter for Railway with GitHub backup support",
+  "main": "server.js",
+  "scripts": {
+    "start": "bash scripts/start.sh",
+    "dev": "node server.js",
+    "backup": "bash scripts/backup.sh",
+    "restore": "bash scripts/restore.sh"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
