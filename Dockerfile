@@ -17,7 +17,9 @@ ENV PORT=3000 \
 	HERMES_TRADING_MODE=paper \
 	LIVE_TRADING_ENABLED=false \
 	BACKUP_BRANCH=main \
-	BACKUP_REPO=""
+	BACKUP_REPO=crimsonej/hermes-app-backup \
+	OPENAI_API_BASE=https://integrate.api.nvidia.com/v1 \
+	AUTO_BACKUP_HOURS=24
 
 
 WORKDIR /app

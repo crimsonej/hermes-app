@@ -50,19 +50,20 @@ Create a private repository on GitHub (e.g. `your-username/hermes-backup`).
 * Select your private backup repo and grant **Read and Write** access for `Repository contents`.
 
 ### 4. Configure Railway Environment Variables
-In your Railway Service -> **Variables** tab, set:
+In Railway -> your service -> **Variables** tab, click **Raw Editor** and paste:
 
 ```text
 HERMES_ENABLED=true
 HERMES_TRADING_MODE=paper
 RESTORE_ON_START=true
-BACKUP_REPO=your-username/hermes-backup
-BACKUP_BRANCH=main
-GITHUB_TOKEN=your_github_fine_grained_token
 AUTO_BACKUP_HOURS=24
-```
+BACKUP_REPO=crimsonej/hermes-app-backup
+BACKUP_BRANCH=main
+OPENAI_API_BASE=https://integrate.api.nvidia.com/v1
 
-#### Provider API Keys (Choose your provider):
+NVIDIA_API_KEY=nvapi-PASTE_YOUR_NVIDIA_API_KEY_HERE
+GITHUB_TOKEN=github_pat_PASTE_YOUR_TOKEN_HERE
+```
 
 ##### Option A: NVIDIA API Key (NVIDIA NIM)
 ```text
