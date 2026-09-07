@@ -1,76 +1,110 @@
-# Hermes Trading & Agent Service (Railway Ready)
+# Hermes Signal Generator & Trade Analyzer (Railway Ready)
 
-This repository runs the official [Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) along with an automated GitHub backup & restore system. The Docker container automatically compiles and pre-installs Hermes Agent during the build phase—**no manual installation commands required on Railway**.
-
----
-
-## ⚡ How It Works
-
-1. **Automatic Build**: When pushed to Railway, Docker installs Python 3.11, `uv`, and clones/builds `hermes-agent`.
-2. **First Boot Restore**: Upon starting up on Railway, `scripts/start.sh` runs `scripts/restore.sh`, which automatically pulls your latest state archive from your private GitHub repository (`BACKUP_REPO`) and restores `/app/.hermes` and `/app/data`.
-3. **Automated & On-Demand Backups**:
-   - **Automatic**: The server runs an internal scheduler that backs up your state every 24 hours (`AUTO_BACKUP_HOURS=24`).
-   - **On-Demand**: You can trigger a backup anytime via HTTP: `GET/POST /api/trigger-backup` or by running `npm run backup`.
-4. **Monthly Railway Account Rotation**: When switching Railway accounts, simply deploy this repository to the new account and supply your `GITHUB_TOKEN` and `BACKUP_REPO`. The app will auto-restore your exact state on boot.
+This repository runs the official [Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) on Railway configured specifically as an automated **Signal Generator** and **Trade Analyzer**, featuring persistent GitHub state backup & restore.
 
 ---
 
-## 🔒 Trading Safety & Secrets
+## ⚡ Key Features
 
-Trading defaults to **paper mode**:
+1. **Signal Generation Skill (`signal-generator`)**:
+   - Pre-installed skill for technical indicator confluence (RSI, MACD, Moving Averages), trend identification, entry target zones, stop loss, and multi-tier take-profit levels with risk/reward calculation (min 1.5:1).
+   - Structured JSON output format for direct integration with external webhooks or APIs.
+
+2. **Trade Analysis Skill (`trade-analyzer`)**:
+   - Pre-installed skill to audit past trades, calculate win rates, profit factor, drawdown metrics, risk compliance score, and slippage evaluation.
+
+3. **NVIDIA API Key & Multi-Provider Support**:
+   - Out-of-the-box support for **NVIDIA NIM / AI Foundation Endpoints** (`NVIDIA_API_KEY`), as well as OpenAI, Anthropic, OpenRouter, and Nous Portal keys.
+
+4. **Persistent GitHub Backup System**:
+   - Automatic background backup of `/app/data` (including generated signals and trade reviews) and `/app/.hermes` state to your private GitHub repo every 24 hours.
+   - Auto-restore on startup so state is preserved across Railway deployments or account migrations.
+
+---
+
+## 🔒 Safety & Secrets
+
+Trading operates in **paper trading mode** by default:
 
 ```text
 HERMES_TRADING_MODE=paper
 LIVE_TRADING_ENABLED=false
 ```
 
-* **Never commit real secrets or `.env` files** to GitHub.
-* Keep your backup GitHub repository **PRIVATE** (`BACKUP_REPO`).
-* Provide credentials only via Railway's Environment Variables panel.
+* **Never commit secret API keys or `.env` files** to your git repository.
+* Ensure your `BACKUP_REPO` is set to **PRIVATE**.
+* Set all sensitive API keys through Railway's Environment Variables dashboard.
 
 ---
 
 ## 🚀 Railway Setup Guide
 
-1. **Deploy Repository**: Create a new Railway project connected to this GitHub repo.
-2. **Create a Private Backup Repository**: Create a private GitHub repository (e.g. `your-github-username/hermes-app-backup`).
-3. **Generate GitHub Personal Access Token (PAT)**:
-   - Go to GitHub -> Settings -> Developer Settings -> Personal Access Tokens (Fine-grained).
-   - Grant **Read and Write** access for `Repository contents` on your private backup repo.
-4. **Configure Environment Variables in Railway**:
+### 1. Deploy Repository
+Create a new Railway project connected to this GitHub repository. Railway will detect the `Dockerfile` and build the container automatically.
+
+### 2. Create a Private GitHub Backup Repository
+Create a private repository on GitHub (e.g. `your-username/hermes-backup`).
+
+### 3. Create a GitHub Personal Access Token (PAT)
+* Go to **GitHub Settings -> Developer Settings -> Personal Access Tokens (Fine-grained)**.
+* Select your private backup repo and grant **Read and Write** access for `Repository contents`.
+
+### 4. Configure Railway Environment Variables
+In your Railway Service -> **Variables** tab, set:
 
 ```text
 HERMES_ENABLED=true
 HERMES_TRADING_MODE=paper
 RESTORE_ON_START=true
-BACKUP_REPO=your-github-username/hermes-app-backup
+BACKUP_REPO=your-username/hermes-backup
 BACKUP_BRANCH=main
-GITHUB_TOKEN=your_github_personal_access_token
+GITHUB_TOKEN=your_github_fine_grained_token
 AUTO_BACKUP_HOURS=24
-OPENAI_API_KEY=your_api_key_here (or ANTHROPIC_API_KEY / OPENROUTER_API_KEY)
+```
+
+#### Provider API Keys (Choose your provider):
+
+##### Option A: NVIDIA API Key (NVIDIA NIM)
+```text
+NVIDIA_API_KEY=nvapi-your_nvidia_api_key_here
+OPENAI_API_BASE=https://integrate.api.nvidia.com/v1
+```
+
+##### Option B: OpenAI / Anthropic / OpenRouter
+```text
+OPENAI_API_KEY=your_openai_api_key
+# or
+ANTHROPIC_API_KEY=your_anthropic_api_key
+# or
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
 ---
 
-## 🌐 Endpoints
+## 🌐 REST API Endpoints
 
-* `GET /health` – Health status & last backup execution log.
+* `GET /health` – Health status & system check.
 * `GET /` – Overview and endpoint index.
-* `POST /api/trigger-backup` – Manually trigger a backup to GitHub instantly.
-* `POST /api/write-data` – Write JSON/text data to storage.
-* `GET /api/read-data` – Read data files from storage.
+* `POST /api/signals` – Save a generated signal object.
+* `GET /api/signals` – Retrieve saved trading signals.
+* `POST /api/analyses` – Save a trade analysis report.
+* `GET /api/analyses` – Retrieve saved trade analysis reports.
+* `POST /api/trigger-backup` – Manually trigger a state backup to GitHub.
+* `POST /api/write-data` – Write custom files to `/app/data`.
+* `GET /api/read-data` – Read files from `/app/data`.
 
 ---
 
 ## 💻 Local Development
 
 ```bash
+# Install dependencies
 npm install
-npm run dev
-```
 
-To run a manual backup or restore locally:
-```bash
+# Run Express web server locally
+npm run dev
+
+# Manual trigger scripts
 npm run backup
 npm run restore
 ```

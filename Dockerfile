@@ -17,7 +17,8 @@ ENV PORT=3000 \
 	HERMES_TRADING_MODE=paper \
 	LIVE_TRADING_ENABLED=false \
 	BACKUP_BRANCH=main \
-	BACKUP_REPO=crimsonej/hermes-app-backup
+	BACKUP_REPO=""
+
 
 WORKDIR /app
 
