@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -11,12 +12,47 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 
 app.use(express.json({ limit: '10mb' }));
 
+let lastBackupStatus = {
+  timestamp: null,
+  success: null,
+  message: 'No backup run since server start.'
+};
+
+function triggerBackupScript(callback) {
+  console.log('[Backup] Initiating backup process...');
+  exec('bash scripts/backup.sh', { cwd: __dirname }, (error, stdout, stderr) => {
+    const timestamp = new Date().toISOString();
+    if (error) {
+      const msg = stderr || error.message;
+      console.error('[Backup Error]:', msg);
+      lastBackupStatus = { timestamp, success: false, message: msg };
+      if (callback) callback(false, msg);
+    } else {
+      const msg = stdout.trim() || 'Backup complete';
+      console.log('[Backup Success]:', msg);
+      lastBackupStatus = { timestamp, success: true, message: msg };
+      if (callback) callback(true, msg);
+    }
+  });
+}
+
+// Scheduled automatic backups (default every 24h, set AUTO_BACKUP_HOURS=0 to disable)
+const AUTO_BACKUP_HOURS = Number(process.env.AUTO_BACKUP_HOURS) || 24;
+if (AUTO_BACKUP_HOURS > 0) {
+  const ms = AUTO_BACKUP_HOURS * 60 * 60 * 1000;
+  setInterval(() => {
+    triggerBackupScript();
+  }, ms);
+  console.log(`[Backup System] Automatic backup scheduled every ${AUTO_BACKUP_HOURS} hours.`);
+}
+
 app.get('/health', (req, res) => {
   res.json({
     ok: true,
     service: 'hermes-app',
     tradingMode: TRADING_MODE,
     dataDir: DATA_DIR,
+    lastBackup: lastBackupStatus,
     timestamp: new Date().toISOString()
   });
 });
@@ -27,7 +63,17 @@ app.get('/', (req, res) => {
     status: 'running',
     tradingMode: TRADING_MODE,
     dataDir: DATA_DIR,
-    endpoints: ['/health', '/api/write-data', '/api/read-data']
+    lastBackup: lastBackupStatus,
+    endpoints: ['/health', '/api/write-data', '/api/read-data', '/api/trigger-backup']
+  });
+});
+
+app.all('/api/trigger-backup', (req, res) => {
+  triggerBackupScript((success, message) => {
+    if (!success) {
+      return res.status(500).json({ ok: false, error: message });
+    }
+    return res.json({ ok: true, message, status: lastBackupStatus });
   });
 });
 
@@ -72,3 +118,4 @@ app.listen(PORT, () => {
   console.log(`Hermes app listening on port ${PORT}`);
   console.log(`Data directory: ${DATA_DIR}`);
 });
+

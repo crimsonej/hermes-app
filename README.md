@@ -1,47 +1,76 @@
-# Hermes trading service
+# Hermes Trading & Agent Service (Railway Ready)
 
-This repository runs the official [Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) with a small web health/data service. The container pins Hermes Agent `v2026.8.31` so deployments are repeatable.
+This repository runs the official [Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) along with an automated GitHub backup & restore system. The Docker container automatically compiles and pre-installs Hermes Agent during the build phase—**no manual installation commands required on Railway**.
 
-## Trading safety
+---
 
-Trading starts in paper mode:
+## ⚡ How It Works
+
+1. **Automatic Build**: When pushed to Railway, Docker installs Python 3.11, `uv`, and clones/builds `hermes-agent`.
+2. **First Boot Restore**: Upon starting up on Railway, `scripts/start.sh` runs `scripts/restore.sh`, which automatically pulls your latest state archive from your private GitHub repository (`BACKUP_REPO`) and restores `/app/.hermes` and `/app/data`.
+3. **Automated & On-Demand Backups**:
+   - **Automatic**: The server runs an internal scheduler that backs up your state every 24 hours (`AUTO_BACKUP_HOURS=24`).
+   - **On-Demand**: You can trigger a backup anytime via HTTP: `GET/POST /api/trigger-backup` or by running `npm run backup`.
+4. **Monthly Railway Account Rotation**: When switching Railway accounts, simply deploy this repository to the new account and supply your `GITHUB_TOKEN` and `BACKUP_REPO`. The app will auto-restore your exact state on boot.
+
+---
+
+## 🔒 Trading Safety & Secrets
+
+Trading defaults to **paper mode**:
 
 ```text
 HERMES_TRADING_MODE=paper
+LIVE_TRADING_ENABLED=false
 ```
 
-The included `trading-risk` skill requires explicit confirmation before an order and does not treat an exchange API key as permission to trade live. Do not put exchange keys, cookies, wallet secrets, or passwords in either GitHub repository or in Hermes data backups.
+* **Never commit real secrets or `.env` files** to GitHub.
+* Keep your backup GitHub repository **PRIVATE** (`BACKUP_REPO`).
+* Provide credentials only via Railway's Environment Variables panel.
 
-## Railway setup
+---
 
-1. Deploy this repository as a Railway service.
-2. Add a persistent volume mounted at `/app/.hermes` and another at `/app/data`, or use one volume mounted at `/app`.
-3. Set `HERMES_ENABLED=true`, `HERMES_TRADING_MODE=paper`, and the model provider variables required by Hermes.
-4. Add `GITHUB_TOKEN` as a Railway secret. The backup repository must remain private because the backup archive is not separately encrypted.
-5. Use a Railway cron service to run `npm run backup` once per day.
+## 🚀 Railway Setup Guide
 
-The Docker image preloads the safe, non-secret defaults from `.env.example`, including paper trading, the backup repository, and the data paths. Railway does not show Docker defaults as rows in the Variables panel. Copy the variable names into that panel only when you need to override a default or add a secret. Do not commit a real `.env` file.
-
-Required setup values:
+1. **Deploy Repository**: Create a new Railway project connected to this GitHub repo.
+2. **Create a Private Backup Repository**: Create a private GitHub repository (e.g. `your-github-username/hermes-app-backup`).
+3. **Generate GitHub Personal Access Token (PAT)**:
+   - Go to GitHub -> Settings -> Developer Settings -> Personal Access Tokens (Fine-grained).
+   - Grant **Read and Write** access for `Repository contents` on your private backup repo.
+4. **Configure Environment Variables in Railway**:
 
 ```text
 HERMES_ENABLED=true
 HERMES_TRADING_MODE=paper
 RESTORE_ON_START=true
-BACKUP_REPO=crimsonej/hermes-app-backup
+BACKUP_REPO=your-github-username/hermes-app-backup
 BACKUP_BRANCH=main
-GITHUB_TOKEN=<your GitHub token>
-<one Hermes provider API key>
-LIVE_TRADING_ENABLED=false
+GITHUB_TOKEN=your_github_personal_access_token
+AUTO_BACKUP_HOURS=24
+OPENAI_API_KEY=your_api_key_here (or ANTHROPIC_API_KEY / OPENROUTER_API_KEY)
 ```
 
-The service exposes `/health` on Railway's `$PORT`. Hermes itself is started by `scripts/start.sh`.
+---
 
-## Local checks
+## 🌐 Endpoints
+
+* `GET /health` – Health status & last backup execution log.
+* `GET /` – Overview and endpoint index.
+* `POST /api/trigger-backup` – Manually trigger a backup to GitHub instantly.
+* `POST /api/write-data` – Write JSON/text data to storage.
+* `GET /api/read-data` – Read data files from storage.
+
+---
+
+## 💻 Local Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-The official Hermes installation and provider configuration are documented in the upstream repository. Start with paper trading and test market-data access before connecting any exchange account.
+To run a manual backup or restore locally:
+```bash
+npm run backup
+npm run restore
+```
