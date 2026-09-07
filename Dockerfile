@@ -2,7 +2,7 @@ FROM node:20-bookworm-slim
 
 ARG HERMES_VERSION=v2026.8.31
 
-# Install comprehensive Linux utilities, build tools, compiler suites, and CLI tools
+# Install comprehensive Linux utilities, build tools, compiler suites, X11 libraries, and GUI dependencies for CUA driver and Browser Automation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
@@ -27,6 +27,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.11-venv \
     sqlite3 \
     libsqlite3-dev \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libxrender1 \
+    libxtst6 \
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgbm1 \
+    libasound2 \
+    xvfb \
+    chromium \
     && rm -rf /var/lib/apt/lists/* \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && /root/.local/bin/uv python install 3.11
@@ -50,14 +67,14 @@ WORKDIR /app
 # Ensure runtime directories exist
 RUN mkdir -p /app/data /app/data/signals /app/data/analyses /app/.hermes /app/backups
 
-# Install Node.js dependencies
+# Install Node.js dependencies & global agent-browser CLI for Browser Automation
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install --omit=dev && npm install -g agent-browser || true
 
 # Copy application files
 COPY . .
 
-# Clone & install Hermes Agent + Trading & Analysis Python packages (ccxt, pandas, ta, websockets, httpx, etc.)
+# Clone & install Hermes Agent + Trading, Browser, Search & Speech Python packages
 RUN git clone --depth 1 --branch "${HERMES_VERSION}" https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
     && /root/.local/bin/uv venv /opt/hermes-venv --python 3.11 \
     && /root/.local/bin/uv pip install --python /opt/hermes-venv/bin/python -e /opt/hermes-agent \
@@ -74,6 +91,11 @@ RUN git clone --depth 1 --branch "${HERMES_VERSION}" https://github.com/NousRese
        python-dotenv \
        beautifulsoup4 \
        lxml \
+       duckduckgo-search \
+       ddgs \
+       gTTS \
+       edge-tts \
+       pillow \
     && ln -sf /opt/hermes-venv/bin/hermes /usr/local/bin/hermes
 
 EXPOSE 3000

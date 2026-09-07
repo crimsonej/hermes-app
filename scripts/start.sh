@@ -19,11 +19,24 @@ else
   echo "No custom Hermes skills found; continuing with built-in skills."
 fi
 
+# Populate Hermes environment secrets file
+mkdir -p "$HERMES_HOME"
+ENV_FILE="$HERMES_HOME/.env"
+touch "$ENV_FILE"
+
+if [ -n "${NVIDIA_API_KEY:-}" ]; then
+  grep -q "^NVIDIA_API_KEY=" "$ENV_FILE" 2>/dev/null || echo "NVIDIA_API_KEY=${NVIDIA_API_KEY}" >> "$ENV_FILE"
+  grep -q "^OPENAI_API_BASE=" "$ENV_FILE" 2>/dev/null || echo "OPENAI_API_BASE=${OPENAI_API_BASE:-https://integrate.api.nvidia.com/v1}" >> "$ENV_FILE"
+fi
+
+if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
+  grep -q "^TELEGRAM_BOT_TOKEN=" "$ENV_FILE" 2>/dev/null || echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}" >> "$ENV_FILE"
+fi
+
 # Auto-configure Telegram Bot if TELEGRAM_BOT_TOKEN environment variable is set
 if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
   echo "Telegram Bot Token detected. Configuring Telegram integration..."
   CONFIG_FILE="$HERMES_HOME/config.yaml"
-  mkdir -p "$HERMES_HOME"
 
   if [ -n "${TELEGRAM_ALLOWED_USERS:-}" ]; then
     ALLOWED_STR="[\"${TELEGRAM_ALLOWED_USERS}\"]"
