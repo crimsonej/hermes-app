@@ -17,7 +17,7 @@ The included `trading-risk` skill requires explicit confirmation before an order
 1. Deploy this repository as a Railway service.
 2. Add a persistent volume mounted at `/app/.hermes` and another at `/app/data`, or use one volume mounted at `/app`.
 3. Set `HERMES_ENABLED=true`, `HERMES_TRADING_MODE=paper`, and the model provider variables required by Hermes.
-4. Add the backup variables from `.env.example` as Railway secrets.
+4. Add `GITHUB_TOKEN` as a Railway secret. The backup repository must remain private because the backup archive is not separately encrypted.
 5. Use a Railway cron service to run `npm run backup` once per day.
 
 The Docker image preloads the safe, non-secret defaults from `.env.example`, including paper trading, the backup repository, and the data paths. Railway does not show Docker defaults as rows in the Variables panel. Copy the variable names into that panel only when you need to override a default or add a secret. Do not commit a real `.env` file.
@@ -30,7 +30,6 @@ HERMES_TRADING_MODE=paper
 RESTORE_ON_START=true
 BACKUP_REPO=crimsonej/hermes-app-backup
 BACKUP_BRANCH=main
-BACKUP_PASSPHRASE=<your generated passphrase>
 GITHUB_TOKEN=<your GitHub token>
 <one Hermes provider API key>
 LIVE_TRADING_ENABLED=false

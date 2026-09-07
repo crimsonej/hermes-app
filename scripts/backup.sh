@@ -8,16 +8,10 @@ DATA_DIR="${DATA_DIR:-$ROOT_DIR/data}"
 HERMES_HOME="${HERMES_HOME:-$ROOT_DIR/.hermes}"
 BACKUP_REPO="${BACKUP_REPO:-}"
 BACKUP_BRANCH="${BACKUP_BRANCH:-main}"
-BACKUP_PASSPHRASE="${BACKUP_PASSPHRASE:-}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 
 if [ -z "$BACKUP_REPO" ] || [ -z "$GITHUB_TOKEN" ]; then
   echo "Missing BACKUP_REPO or GITHUB_TOKEN. Backup skipped."
-  exit 0
-fi
-
-if [ -z "$BACKUP_PASSPHRASE" ]; then
-  echo "BACKUP_PASSPHRASE is required. Backup skipped."
   exit 0
 fi
 
@@ -38,8 +32,6 @@ fi
 find "$TEMP_DIR" -type f \( -name '*.key' -o -name '*.pem' -o -name '*.secret' -o -name '.env' \) -delete
 
 tar -czf "$ARCHIVE" -C "$TEMP_DIR" .
-openssl enc -aes-256-cbc -salt -pbkdf2 -pass "pass:$BACKUP_PASSPHRASE" -in "$ARCHIVE" -out "$ARCHIVE.enc"
-rm -f "$ARCHIVE"
 rm -rf "$TEMP_DIR"
 
 REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${BACKUP_REPO}.git"
@@ -52,7 +44,7 @@ else
   git clone "$REMOTE_URL" "$CLONE_DIR"
 fi
 
-cp "$ARCHIVE.enc" "$CLONE_DIR/"
+cp "$ARCHIVE" "$CLONE_DIR/"
 cd "$CLONE_DIR"
 
 git config user.name "Railway Backup"
@@ -64,6 +56,6 @@ git commit -m "backup: $STAMP" || true
 git push origin "$BACKUP_BRANCH" || git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${BACKUP_REPO}.git" "$BACKUP_BRANCH"
 
 rm -rf "$CLONE_DIR"
-rm -f "$ARCHIVE.enc"
+rm -f "$ARCHIVE"
 
 echo "Backup uploaded to GitHub for $STAMP"

@@ -8,10 +8,9 @@ DATA_DIR="${DATA_DIR:-$ROOT_DIR/data}"
 HERMES_HOME="${HERMES_HOME:-$ROOT_DIR/.hermes}"
 BACKUP_REPO="${BACKUP_REPO:-}"
 BACKUP_BRANCH="${BACKUP_BRANCH:-main}"
-BACKUP_PASSPHRASE="${BACKUP_PASSPHRASE:-}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 
-if [ -z "$BACKUP_REPO" ] || [ -z "$GITHUB_TOKEN" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+if [ -z "$BACKUP_REPO" ] || [ -z "$GITHUB_TOKEN" ]; then
   echo "Restore skipped: missing backup config."
   exit 0
 fi
@@ -28,15 +27,15 @@ else
   exit 0
 fi
 
-LATEST_FILE="$(find "$CLONE_DIR" -type f -name '*.enc' | sort | tail -n 1 || true)"
+LATEST_FILE="$(find "$CLONE_DIR" -type f -name 'hermes-data-*.tar.gz' | sort | tail -n 1 || true)"
 
 if [ -z "$LATEST_FILE" ]; then
-  echo "No encrypted backup file found."
+  echo "No backup archive found."
   rm -rf "$CLONE_DIR"
   exit 0
 fi
 
-TMP_ARCHIVE="$ROOT_DIR/backup-tmp/latest-backup.tar.gz.enc"
+TMP_ARCHIVE="$ROOT_DIR/backup-tmp/latest-backup.tar.gz"
 cp "$LATEST_FILE" "$TMP_ARCHIVE"
 
 mkdir -p "$DATA_DIR"
@@ -44,9 +43,7 @@ TMP_EXTRACT="$ROOT_DIR/backup-tmp/extract"
 rm -rf "$TMP_EXTRACT"
 mkdir -p "$TMP_EXTRACT"
 
-openssl enc -d -aes-256-cbc -pbkdf2 -pass "pass:$BACKUP_PASSPHRASE" -in "$TMP_ARCHIVE" -out "$TMP_EXTRACT/data.tar.gz"
-
-tar -xzf "$TMP_EXTRACT/data.tar.gz" -C "$TMP_EXTRACT"
+tar -xzf "$TMP_ARCHIVE" -C "$TMP_EXTRACT"
 
 if [ -d "$TMP_EXTRACT/data" ]; then
   cp -R "$TMP_EXTRACT/data/." "$DATA_DIR/"
