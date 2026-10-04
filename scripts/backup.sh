@@ -77,3 +77,13 @@ rm -f "$ARCHIVE"
 
 echo "Backup uploaded successfully to GitHub ($CLEAN_REPO) for $STAMP"
 
+# Record backup status JSON for Aether visibility
+cat <<EOF > "$DATA_DIR/backup-status.json"
+{
+  "lastBackup": "$STAMP",
+  "repository": "$CLEAN_REPO",
+  "branch": "$BACKUP_BRANCH",
+  "status": "success",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF

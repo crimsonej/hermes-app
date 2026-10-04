@@ -12,7 +12,6 @@ backups/
 # app data
 /data/
 /data/*
-/hermes/
 /.hermes/
 
 # local secrets
