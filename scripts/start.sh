@@ -51,15 +51,16 @@ if [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
   grep -q "^TELEGRAM_CHAT_ID=" "$ENV_FILE" 2>/dev/null || echo "TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}" >> "$ENV_FILE"
 fi
 
-# Auto-configure Telegram Bot if TELEGRAM_BOT_TOKEN is set AND config.yaml doesn't already exist or lack telegram
+# Auto-configure Telegram Bot if TELEGRAM_BOT_TOKEN is set
 CONFIG_FILE="$HERMES_HOME/config.yaml"
-if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ ! -s "$CONFIG_FILE" ]; then
-  echo "Telegram Bot Token detected. Creating initial Telegram configuration..."
+if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
+  echo "Telegram Bot Token detected. Updating Telegram configuration in $CONFIG_FILE..."
 
-  if [ -n "${TELEGRAM_ALLOWED_USERS:-}" ]; then
-    ALLOWED_STR="[\"${TELEGRAM_ALLOWED_USERS}\"]"
+  ALLOWED_USERS_VAL="${TELEGRAM_ALLOWED_USERS:-*}"
+  if [ "$ALLOWED_USERS_VAL" = "*" ]; then
+    ALLOWED_STR="[\"*\"]"
   else
-    ALLOWED_STR="[\"\*\"]"
+    ALLOWED_STR="[\"${ALLOWED_USERS_VAL}\"]"
   fi
 
   CHAT_ID_LINE=""
