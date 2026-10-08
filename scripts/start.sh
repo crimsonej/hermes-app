@@ -5,16 +5,24 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 HERMES_HOME="${HERMES_HOME:-$ROOT_DIR/.hermes}"
-export HERMES_HOME
+HERMES_PROFILE="${HERMES_PROFILE:-lean}"
+ENABLE_XVFB="${ENABLE_XVFB:-false}"
+export HERMES_HOME HERMES_PROFILE ENABLE_XVFB
 
-# Start Xvfb for headless browser automation
-if command -v Xvfb >/dev/null 2>&1; then
-  echo "Starting Xvfb on display :99..."
-  Xvfb :99 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 &
-  XVFB_PID=$!
-  sleep 2
-  export DISPLAY=:99
-  echo "Xvfb started with PID $XVFB_PID"
+echo "Starting Hermes in ${HERMES_PROFILE} mode."
+
+# Keep Railway memory under control by skipping GUI/browser layers unless explicitly enabled.
+if [ "${ENABLE_XVFB:-false}" = "true" ] || [ "${HERMES_PROFILE}" = "full" ]; then
+  if command -v Xvfb >/dev/null 2>&1; then
+    echo "Starting Xvfb on display :99..."
+    Xvfb :99 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 &
+    XVFB_PID=$!
+    sleep 2
+    export DISPLAY=:99
+    echo "Xvfb started with PID $XVFB_PID"
+  fi
+else
+  echo "Skipping Xvfb because the lean-memory profile is active."
 fi
 
 if [ "${RESTORE_ON_START:-true}" = "true" ]; then
@@ -100,7 +108,7 @@ if [ "${HERMES_ENABLED:-true}" = "true" ]; then
     echo "Hermes executable not found. Skipping daemon launch." >&2
     HERMES_PID=""
   else
-    echo "Starting Hermes Gateway daemon using $HERMES_BIN (with full auto-approval hooks enabled)..."
+    echo "Starting Hermes Gateway daemon using $HERMES_BIN (memory-safe profile: ${HERMES_PROFILE})..."
     export HERMES_ACCEPT_HOOKS=1
     nohup "$HERMES_BIN" gateway run --accept-hooks >> "$DATA_DIR/hermes-gateway.log" 2>&1 &
     HERMES_PID=$!
@@ -109,6 +117,17 @@ if [ "${HERMES_ENABLED:-true}" = "true" ]; then
 else
   echo "HERMES_ENABLED is false; skipping Hermes daemon."
   HERMES_PID=""
+fi
+
+if [ "${MT5_EXECUTION_ENABLED:-false}" = "true" ]; then
+  if [ -n "${MT5_BRIDGE_URL:-}" ]; then
+    echo "MT5 execution is enabled in bridge mode with URL: ${MT5_BRIDGE_URL}"
+  elif [ -n "${MT5_CLI_BIN:-}" ] && [ -x "${MT5_CLI_BIN}" ]; then
+    echo "MT5 execution is enabled in CLI mode using ${MT5_CLI_BIN}"
+  else
+    echo "ERROR: MT5_EXECUTION_ENABLED=true but no valid MT5 backend is configured. Set MT5_BRIDGE_URL or a working MT5_CLI_BIN before enabling live trading." >&2
+    exit 1
+  fi
 fi
 
 
