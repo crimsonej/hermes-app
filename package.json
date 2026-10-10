@@ -7,9 +7,7 @@
     "start": "bash scripts/start.sh",
     "dev": "node server.js",
     "backup": "bash scripts/backup.sh",
-    "restore": "bash scripts/restore.sh",
-    "mt5-bridge": "node scripts/mt5-bridge.js",
-    "test": "node --test"
+    "restore": "bash scripts/restore.sh"
   },
   "dependencies": {
     "express": "^4.19.2"

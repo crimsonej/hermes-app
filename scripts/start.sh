@@ -119,18 +119,6 @@ else
   HERMES_PID=""
 fi
 
-if [ "${MT5_EXECUTION_ENABLED:-false}" = "true" ]; then
-  if [ -n "${MT5_BRIDGE_URL:-}" ]; then
-    echo "MT5 execution is enabled in bridge mode with URL: ${MT5_BRIDGE_URL}"
-  elif [ -n "${MT5_CLI_BIN:-}" ] && [ -x "${MT5_CLI_BIN}" ]; then
-    echo "MT5 execution is enabled in CLI mode using ${MT5_CLI_BIN}"
-  else
-    echo "ERROR: MT5_EXECUTION_ENABLED=true but no valid MT5 backend is configured. Set MT5_BRIDGE_URL or a working MT5_CLI_BIN before enabling live trading." >&2
-    exit 1
-  fi
-fi
-
-
 trap 'kill "$WEB_PID" ${HERMES_PID:-} ${XVFB_PID:-} 2>/dev/null || true' EXIT INT TERM
 wait "$WEB_PID"
 
